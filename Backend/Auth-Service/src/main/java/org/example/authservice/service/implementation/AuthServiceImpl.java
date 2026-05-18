@@ -5,6 +5,7 @@ import org.example.authservice.dto.*;
 import org.example.authservice.entity.User;
 import org.example.authservice.event.UserRegisteredEvent;
 import org.example.authservice.exception.UserAlreadyExistsException;
+import org.example.authservice.producer.AuthEventProducer;
 import org.example.authservice.repository.UserRepository;
 import org.example.authservice.service.AuthService;
 import org.springframework.amqp.core.TopicExchange;
@@ -22,6 +23,9 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RabbitTemplate rabbitTemplate;
+    private final TopicExchange exchange;
+    private final AuthEventProducer authEventProducer;
 
     @Override
     public void register(RegisterRequest request) {
@@ -38,6 +42,13 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+
+        authEventProducer.sendUserRegisteredEvent(
+                new UserRegisteredEvent(
+                        user.getName(),
+                        user.getEmail()
+                )
+        );
     }
 
     @Override
@@ -50,13 +61,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = jwtService.generateToken(user, 1000L * 60 * 60 * 24 * 7);
-        String refreshToken = jwtService.generateToken(user, 1000L * 60 * 60 * 24 * 7);
 
-        return new AuthResponse(token, refreshToken);
+        return new AuthResponse(token);
     }
 
     @Override
     public List<User> getUsers() {
         return List.of();
+    }
+
+    @Async
+    public void sendUserCreatedEvent(UserRegisteredEvent event) {
+        rabbitTemplate.convertAndSend(exchange.getName(), "user.created", event);
     }
 }

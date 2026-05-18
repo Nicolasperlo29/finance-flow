@@ -7,9 +7,8 @@ import org.example.authservice.dto.Role;
 
 import java.io.Serializable;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class UserRegisteredEvent implements Serializable {
-
+public record UserRegisteredEvent(
+        String name,
+        String email
+) {
 }
