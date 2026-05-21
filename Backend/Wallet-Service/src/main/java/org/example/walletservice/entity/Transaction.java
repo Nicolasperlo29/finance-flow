@@ -2,16 +2,20 @@ package org.example.walletservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.walletservice.dto.TransactionStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "transaction")
+@Table(name = "transactions")
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Transaction {
 
     @Id
@@ -24,5 +28,12 @@ public class Transaction {
 
     private BigDecimal amount;
 
-    private String status;
+    private TransactionStatus status;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

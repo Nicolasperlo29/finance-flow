@@ -18,6 +18,9 @@ public class RabbitConfig {
     public static final String QUEUE =
             "cola-mails";
 
+    public static final String TRANSFER_QUEUE =
+            "cola-transfers";
+
     public static final String ROUTING_KEY =
             "usuario.registrado";
 

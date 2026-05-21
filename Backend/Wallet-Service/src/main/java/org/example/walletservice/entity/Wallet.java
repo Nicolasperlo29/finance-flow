@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "wallet")
+@Table(name = "wallets")
 @AllArgsConstructor
 @NoArgsConstructor
 public class Wallet {
@@ -22,10 +22,23 @@ public class Wallet {
     @Column(unique = true)
     private Long userId;
 
-//    @Column(unique = true)
-//    private String alias;
+    @Column(unique = true, nullable = false)
+    private String alias;
+
+//    @Column(unique = true, nullable = false)
+//    private String cvu;
 
     private BigDecimal balance;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+
+        if (this.balance == null) {
+            this.balance = BigDecimal.ZERO;
+        }
+    }
 }

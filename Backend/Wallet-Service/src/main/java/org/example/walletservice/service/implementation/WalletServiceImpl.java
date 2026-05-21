@@ -31,6 +31,8 @@ public class WalletServiceImpl implements WalletService {
         wallet.setUserId(userId);
         wallet.setBalance(new BigDecimal(100));
         wallet.setCreatedAt(LocalDateTime.now());
+        String alias = userId.toString() + "ALIAS";
+        wallet.setAlias(alias);
 
         walletRepository.save(wallet);
 

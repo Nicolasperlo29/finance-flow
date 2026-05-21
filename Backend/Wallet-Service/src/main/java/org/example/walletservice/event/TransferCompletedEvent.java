@@ -1,4 +1,13 @@
 package org.example.walletservice.event;
 
-public class TransferCompletedEvent {
+import java.math.BigDecimal;
+
+public record TransferCompletedEvent(
+
+        Long sourceWalletId,
+
+        Long destinationWalletId,
+
+        BigDecimal amount
+) {
 }

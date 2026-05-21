@@ -4,9 +4,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.walletservice.dto.Request.TransferRequest;
 import org.example.walletservice.dto.Response.TransactionResponse;
+import org.example.walletservice.dto.TransactionStatus;
+import org.example.walletservice.entity.Transaction;
 import org.example.walletservice.entity.Wallet;
+import org.example.walletservice.event.TransferCompletedEvent;
 import org.example.walletservice.exception.InsufficientBalanceException;
 import org.example.walletservice.exception.WalletNotFoundException;
+import org.example.walletservice.producer.WalletEventProducer;
 import org.example.walletservice.repository.TransactionRepository;
 import org.example.walletservice.repository.WalletRepository;
 import org.example.walletservice.service.TransactionService;
@@ -23,31 +27,96 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final WalletRepository walletRepository;
 
+    private final WalletEventProducer walletEventProducer;
+
     @Transactional
     @Override
-    public TransactionResponse transfer(TransferRequest transferRequest) {
+    public TransactionResponse transfer(
+            TransferRequest request
+    ) {
 
-        Optional<Wallet> walletOrigen = walletRepository.findByUserId(transferRequest.getUserIdOrigen());
-        Optional<Wallet> walletDestino = walletRepository.findByUserId(transferRequest.getUserId());
+        Wallet origen = walletRepository
+                .findByUserId(
+                        request.getUserIdOrigen()
+                )
+                .orElseThrow(
+                        () -> new WalletNotFoundException(
+                                "Wallet origen no encontrada"
+                        )
+                );
 
-        if (walletOrigen.isEmpty() || walletDestino.isEmpty()) {
-            throw new WalletNotFoundException("No se encuentra la wallet");
+        Wallet destino = walletRepository
+                .findByAlias(
+                        request.getAliasDestino()
+                )
+                .orElseThrow(
+                        () -> new WalletNotFoundException(
+                                "Wallet destino no encontrada"
+                        )
+                );
+
+        if (
+                origen.getId()
+                        .equals(destino.getId())
+        ) {
+
+            throw new RuntimeException(
+                    "No puedes transferirte a ti mismo"
+            );
         }
 
-        BigDecimal actualOrigen = walletOrigen.get().getBalance();
+        if (
+                origen.getBalance()
+                        .compareTo(request.getMonto()) < 0
+        ) {
 
-        if (actualOrigen.compareTo(transferRequest.getMonto()) < 0) {
-            throw new InsufficientBalanceException("No tienes suficiente saldo");
+            throw new InsufficientBalanceException(
+                    "Saldo insuficiente"
+            );
         }
 
-        BigDecimal nuevoOrigen = actualOrigen.subtract(transferRequest.getMonto());
-        walletOrigen.get().setBalance(nuevoOrigen);
-        walletRepository.save(walletOrigen.get());
+        origen.setBalance(
+                origen.getBalance()
+                        .subtract(request.getMonto())
+        );
 
-        BigDecimal actualDestino = walletDestino.get().getBalance().add(transferRequest.getMonto());
-        walletDestino.get().setBalance(actualDestino);
-        walletRepository.save(walletDestino.get());
+        destino.setBalance(
+                destino.getBalance()
+                        .add(request.getMonto())
+        );
 
-        return new TransactionResponse("Ok", transferRequest.getMonto());
+        Transaction transaction =
+                Transaction.builder()
+                        .sourceWalletId(
+                                origen.getId()
+                        )
+                        .destinationWalletId(
+                                destino.getId()
+                        )
+                        .amount(request.getMonto())
+                        .status(
+                                TransactionStatus.COMPLETED
+                        )
+                        .build();
+
+        transactionRepository.save(transaction);
+
+        walletEventProducer
+                .sendTransferCompletedEvent(
+
+                        new TransferCompletedEvent(
+                                origen.getId(),
+                                destino.getId(),
+                                request.getMonto()
+                        )
+                );
+
+        walletRepository.save(origen);
+        walletRepository.save(destino);
+
+        return new TransactionResponse(
+                "Transfer successful",
+                request.getMonto()
+        );
     }
 }

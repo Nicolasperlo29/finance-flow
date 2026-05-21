@@ -13,7 +13,7 @@ public class TransferRequest {
 
     private Long userIdOrigen;
 
-    private Long userId;
+    private String aliasDestino;
 
     private BigDecimal monto;
 }
