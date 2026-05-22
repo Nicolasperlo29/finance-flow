@@ -6,10 +6,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TransferCompletedEvent {
-
-    private BigDecimal amount;
+public record TransferCompletedEvent(
+        String email,
+        BigDecimal amount,
+        String userNameDestino
+) {
 }

@@ -4,10 +4,10 @@ import java.math.BigDecimal;
 
 public record TransferCompletedEvent(
 
-        Long sourceWalletId,
+        String email,
 
-        Long destinationWalletId,
+        BigDecimal amount,
 
-        BigDecimal amount
+        String userNameDestino
 ) {
 }

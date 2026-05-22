@@ -20,9 +20,11 @@ public class AuthController {
 
     private final AuthService service;
 
-    @GetMapping("/ping")
-    public ResponseEntity<String> pong() {
-        return ResponseEntity.ok("pong");
+    private final UserService userService;
+
+    @GetMapping("/user")
+    public ResponseEntity<UserResponse> getUser(@RequestParam Long userId) {
+        return ResponseEntity.ok(userService.getUser(userId));
     }
 
     @PostMapping("/register")

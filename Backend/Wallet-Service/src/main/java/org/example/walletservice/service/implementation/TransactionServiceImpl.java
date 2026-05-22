@@ -2,8 +2,10 @@ package org.example.walletservice.service.implementation;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.walletservice.client.AuthClient;
 import org.example.walletservice.dto.Request.TransferRequest;
 import org.example.walletservice.dto.Response.TransactionResponse;
+import org.example.walletservice.dto.Response.UserResponse;
 import org.example.walletservice.dto.TransactionStatus;
 import org.example.walletservice.entity.Transaction;
 import org.example.walletservice.entity.Wallet;
@@ -28,6 +30,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final WalletRepository walletRepository;
 
     private final WalletEventProducer walletEventProducer;
+
+    private final AuthClient authClient;
 
     @Transactional
     @Override
@@ -101,13 +105,16 @@ public class TransactionServiceImpl implements TransactionService {
 
         transactionRepository.save(transaction);
 
+        UserResponse userOrigen = getUser(origen.getUserId());
+        UserResponse userDestino = getUser(destino.getUserId());
+
         walletEventProducer
                 .sendTransferCompletedEvent(
 
                         new TransferCompletedEvent(
-                                origen.getId(),
-                                destino.getId(),
-                                request.getMonto()
+                                userOrigen.getEmail(),
+                                request.getMonto(),
+                                userDestino.getUserNameDestino()
                         )
                 );
 
@@ -118,5 +125,10 @@ public class TransactionServiceImpl implements TransactionService {
                 "Transfer successful",
                 request.getMonto()
         );
+    }
+
+    private UserResponse getUser(Long userId) {
+        UserResponse user = authClient.getUser(userId);
+        return user;
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
@@ -25,6 +27,24 @@ public class EmailServiceImpl implements EmailService {
 
         message.setText(
                 "Your account was created successfully."
+        );
+
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendTransferEmail(BigDecimal amount, String to, String userNameDestino) {
+        SimpleMailMessage message =
+                new SimpleMailMessage();
+
+        message.setTo(to);
+
+        message.setSubject(
+                "Transferencia realizada"
+        );
+
+        message.setText(
+                "Tu transferencia de " + amount + " ya fue ralizada. Hacia " + userNameDestino + "."
         );
 
         mailSender.send(message);
