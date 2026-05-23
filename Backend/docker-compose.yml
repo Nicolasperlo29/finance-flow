@@ -1,9 +1,116 @@
 services:
 
+  postgres:
+    image: postgres:16
+    container_name: postgres
+
+    environment:
+      POSTGRES_USER: nicolas
+      POSTGRES_PASSWORD: nicolas
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - fintech-network
+
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmqFinance
+    container_name: rabbitmq
 
     ports:
       - "5672:5672"
       - "15672:15672"
+
+    networks:
+      - fintech-network
+
+  eureka-server:
+    build: Eureka-Server
+
+    container_name: eureka-server
+
+    ports:
+      - "8761:8761"
+
+    networks:
+      - fintech-network
+
+  auth-service:
+    build: ./auth-service
+
+    container_name: auth-service
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+
+    depends_on:
+      - postgres
+      - rabbitmq
+      - eureka-server
+
+    networks:
+      - fintech-network
+
+  wallet-service:
+    build: ./wallet-service
+
+    container_name: wallet-service
+
+    ports:
+      - "8082:8082"
+
+    depends_on:
+      - postgres
+      - rabbitmq
+      - eureka-server
+    networks:
+      - fintech-network
+
+  notification-service:
+    build: ./notification-service
+
+    container_name: notification-service
+
+    ports:
+      - "8083:8083"
+
+    environment:
+      MAIL_USERNAME: ${MAIL}
+      MAIL_PASSWORD: ${PASSWORD}
+
+    depends_on:
+      - rabbitmq
+      - eureka-server
+
+    networks:
+      - fintech-network
+
+  api-gateway:
+    build: Api-Gateway
+
+    container_name: api-gateway
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - eureka-server
+      - auth-service
+      - wallet-service
+
+    networks:
+      - fintech-network
+
+networks:
+  fintech-network:
+
+volumes:
+  postgres_data:

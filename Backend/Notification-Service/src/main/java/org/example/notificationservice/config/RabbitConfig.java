@@ -15,19 +15,34 @@ public class RabbitConfig {
     public static final String EXCHANGE =
             "fintech-exchange";
 
+    // =========================
+    // MAILS
+    // =========================
+
     public static final String QUEUE =
             "cola-mails";
+
+    public static final String ROUTING_KEY =
+            "usuario.registrado";
+
+    // =========================
+    // TRANSFERS
+    // =========================
 
     public static final String TRANSFER_QUEUE =
             "cola-transfers";
 
-    public static final String ROUTING_KEY =
-            "usuario.registrado";
+    public static final String TRANSFER_ROUTING_KEY =
+            "transferencia.realizada";
 
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);
     }
+
+    // =========================
+    // MAIL QUEUE
+    // =========================
 
     @Bean
     public Queue queue() {
@@ -44,6 +59,27 @@ public class RabbitConfig {
                 .bind(queue)
                 .to(exchange)
                 .with(ROUTING_KEY);
+    }
+
+    // =========================
+    // TRANSFER QUEUE
+    // =========================
+
+    @Bean
+    public Queue transferQueue() {
+        return new Queue(TRANSFER_QUEUE);
+    }
+
+    @Bean
+    public Binding transferBinding(
+            Queue transferQueue,
+            TopicExchange exchange
+    ) {
+
+        return BindingBuilder
+                .bind(transferQueue)
+                .to(exchange)
+                .with(TRANSFER_ROUTING_KEY);
     }
 
     @Bean
