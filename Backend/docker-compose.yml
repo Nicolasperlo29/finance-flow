@@ -83,7 +83,7 @@ services:
       - "8083:8083"
 
     environment:
-      MAIL_USERNAME: ${MAIL}
+      MAIL_USERNAME: ${EMAIL}
       MAIL_PASSWORD: ${PASSWORD}
 
     depends_on:

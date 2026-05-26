@@ -4,6 +4,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.example.authservice.entity.User;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,9 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "QqK8bHx9kT1RzM3WqY5eVb6gA2tJx0PnL8sFd4uH9wI=";
-    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    @Value("${jwt.secret}")
+    private String secretKey;
+    private final SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
 
     public String generateToken(User user, long expirationMillis) {
         return Jwts.builder()
